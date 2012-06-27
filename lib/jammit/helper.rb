@@ -28,21 +28,20 @@ module Jammit
       options = packages.extract_options!
       html_safe packages.map {|pack|
         should_package? ? Jammit.asset_url(pack, :js) : Jammit.packager.individual_urls(pack.to_sym, :js)
-      }.flatten.map do |pack|
+      }.flatten.map { |pack|
         if !Rails.env.development? && !Rails.env.test?
-          asset = Rails.root.join(pack)
-          if !asset.file?
-            asset = Rails.root.join("public", pack)
-          end
+          # Remove the forward slash so we can join with Rails.root
+          base_path = pack[1..-1]
+          asset = Rails.root.join("public", base_path)
 
           if asset.file?
             mtime = File.mtime(Rails.root.join(asset).to_s).to_i
-            pack.gsub!(/\.js$/, ".#{mtime}.js")
+            pack.gsub!(/\.js$/, ".#{mtime}.js") # => assets/something.12349023.js
           end
         end
 
         javascript_include_tag pack, options
-      end.join("\n")
+      }.join("\n")
     end
 
     # Writes out the URL to the concatenated and compiled JST file -- we always
